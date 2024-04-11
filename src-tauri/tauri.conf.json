@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "PacketHunter",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -22,7 +22,7 @@
     },
     "bundle": {
       "active": true,
-      "category": "NetworkTool",
+      "category": "Utility",
       "copyright": "© 2024 Chen zhangtao",
       "deb": {
         "depends": ["Npcap","Webview2"]
@@ -35,7 +35,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "com.github.ink-carp.my-app",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -44,10 +44,18 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
+      "resources": ["npcap-1.79.exe"],
+      "shortDescription": "A Network Packet Capture Tool",
+      "targets": "msi",
       "windows": {
+        "wix":{
+          "language": "zh-CN" 
+
+        },
+        "webviewInstallMode": {
+          "type": "downloadBootstrapper"
+        },
+        
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
         "timestampUrl": ""

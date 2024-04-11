@@ -273,6 +273,7 @@ tbody tr:last-child td:last-child {
     border-bottom-right-radius: 5px;
 }
 tbody tr {
+    height: 10%;
     border: 1px solid transparent; /* 添加透明边框 */
     user-select: none;
     transition: background-color 0.3s ease; /* 添加动画 */

@@ -23,6 +23,7 @@
 	let undecode_link:UndecodeProtocal | null;
 	let undecode_net:UndecodeProtocal | null;
 	let undecode_trans:UndecodeProtocal | null;
+	let selectedLayer:string|null = null;
 
 
 
@@ -123,6 +124,7 @@
 		link = null;
 		net = null
 		trans = null;
+		selectedLayer = null;
 	});
 </script>
 
@@ -140,7 +142,7 @@
 		if(capture_status){
 			invoke('stop_capture');
 		}
-		if(!save_state){
+		if(!save_state && $received_data.length > 0){
 			ask("是否保存当前数据包?","提示").then((res)=>{
 				if(res){
 					save_file().then(()=>{
@@ -190,48 +192,66 @@
 {#if row_selcted && !capture_status}
 <footer>
 	<div>
-		{#if link}
-		  <p>链路层:</p>
-		  {#each link_parser(link) as line}
-			<p>{line}</p>
-		  {/each}
-		{:else}
-		  {"链路层解析失败，协议:"+undecode_link?.protocal_name}
-		{/if}
-		{#if net}
-		  <p>网络层:</p>
-		  {#each net_parser(net) as line}
-			<p>{line}</p>
-		  {/each}
-		{:else}
-		  {"网络层解析失败，协议:"+undecode_net?.protocal_name}
-		{/if}
-		{#if trans}
-		  <p>传输层:</p>
-		  {#each trans_parser(trans) as line}
-			<p>{line}</p>
-		  {/each}
-		{:else}
-		  {"传输层解析失败，协议:"+undecode_trans?.protocal_name}
-		{/if}
-		</div>
-		<div>
-		  {#if link}
-			{link_payload(link)}
-		  {:else}
-			{undecode_link?.payload}
-		  {/if}
-		  {#if net}
-			{net_payload(net)}
-		  {:else}
-			{undecode_net?.payload}
-		  {/if}
-		  {#if trans}
-			{trans_payload(trans)}
-		  {:else}
-			{undecode_trans?.payload}
-		  {/if}
-	</div>
+		<details>
+			<summary on:click={() => selectedLayer = 'link'}>链路层:</summary>
+			{#if link}
+				{#each link_parser(link) as line}
+					<p>{line}</p>
+				{/each}
+			{:else}
+				{"链路层解析失败，协议:"+undecode_link?.protocal_name}
+			{/if}
+		</details>
+		<details>
+			<summary on:click={() => selectedLayer = 'net'}>网络层:</summary>
+			{#if net}
+				{#each net_parser(net) as line}
+					<p>{line}</p>
+				{/each}
+			{:else}	
+				{"网络层解析失败，协议:"+undecode_net?.protocal_name}
+			{/if}
+		</details>
+        <details>
+			<summary on:click={() => selectedLayer = 'trans'}>传输层:</summary>
+			{#if trans}
+				{#each trans_parser(trans) as line}
+					<p>{line}</p>
+				{/each}
+			{:else}
+				{"传输层解析失败，协议:"+undecode_trans?.protocal_name}
+			{/if}
+		</details>
+    </div>
+    <div style="border: 1px solid #000;border-radius: 4px;padding:1em;">
+        {#if selectedLayer === 'link'}
+            {#if link}
+                {link_payload(link)}
+			{:else if undecode_link}
+				{undecode_link.payload}
+			{:else}
+				"没有内容"
+			{/if}
+        {/if}
+        {#if selectedLayer === 'net'}
+			{#if net}
+				{net_payload(net)}
+			{:else if undecode_net}
+				{undecode_net.payload}
+			{:else}
+				"没有内容"
+			{/if}
+        {/if}
+        {#if selectedLayer === 'trans'}
+			{#if trans}
+				{trans_payload(trans)}
+			{:else if undecode_trans}
+				{undecode_trans.payload}
+			{:else}
+				"没有内容"
+			{/if}
+        {/if}
+    </div>
 </footer>
 {/if}
 
@@ -256,6 +276,8 @@
 		background-color: #f0f0f0;
 	}
 	header p{
+		border: 1px solid #000;
+		border-radius: 5px;
 		width: 50%;
 		text-align: center;
 		font-size: 16px;
@@ -270,7 +292,8 @@
 	}
 	footer{
 		width: 95%;
-		height: 20vh;
+		min-height: 20vh;
+		max-height: 20vh;
 		display: flex;
 		justify-content: space-between;
 	}
@@ -278,7 +301,7 @@
 		padding: auto;
 		width: 45%;
 		height: 100%;
-		display: flex;
+		display: block;
 		flex: 0 0 50%;
 		flex-direction: column;
 		line-height: 1.2;
@@ -289,8 +312,32 @@
 	}
 	footer p{
 		margin: 0;
+		background-color: rgb(179, 224, 229);
 	}
+	details {
+		border: 1px solid #000;
+        border-radius: 4px;
+        margin-bottom: 1em;
+		padding: .5em;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    summary {
+		user-select: none;
+        font-size: 1.2em;
+        color: #333;
+        cursor: pointer;
+    }
+
+    summary:hover {
+        background: linear-gradient(to left, #61e5d3, #e549d3);
+    }
+
+    summary::-webkit-details-marker {
+        display: none;
+    }
 	button {
+		user-select: none;
 		transition: all 0.3s ease;
 	}
 
@@ -327,6 +374,19 @@
 		border: 1px solid #ddd;
 		padding: 8px;
 		text-align: center;
+	}
+	table tr{
+		transition: all 0.3s ease;
+	}
+	table tr:hover {
+		transform: scaleY(1.1);
+		background: linear-gradient(to left, #61e5d3, #e549d3 , #cfe53e);
+	}
+
+	table tr:active {
+		transform: scaleY(0.9);
+		transform: scaleX(0.95);
+		background-color: rgb(238, 43, 235);
 	}
 </style>
 

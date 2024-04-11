@@ -3,7 +3,7 @@
 //外部库
 use pcap::{Active, Capture, Dead, Device, Inactive, Linktype, Packet, PacketCodec};
 use tauri::{Window,State};
-use app::*;
+use PacketHunter::*;
 
 use std::cmp::Ordering;
 //标准库
@@ -16,7 +16,7 @@ struct FlowRunState{is_running:Arc<Mutex<bool>>}
 struct CapRunState{is_running:Arc<Mutex<bool>>}
 struct FlowThreadState{handle:Arc<Mutex<Option<thread::JoinHandle<()>>>>}
 struct CapThreadState{handle:Arc<Mutex<Option<thread::JoinHandle<()>>>>}
-struct DeadCap {cap:Option<Capture<Dead>>}
+//struct DeadCap {cap:Option<Capture<Dead>>}
 #[derive(Default)]
 struct OfflineBank{
   linktype:Mutex<i32>,
@@ -180,13 +180,14 @@ fn open_pcap_file(path:&str,bpf:&str,offline_bank:State<OfflineBank>)->Result<Ve
       return Err(e.to_string());
     },
   }
-  println!("Open Successd!");
   if let Ok(files) = fs::read_to_string(FILE_LIST_PATH){
     let mut files:Vec<String> = files.split("\n").map(|s| s.trim().to_string()).collect();
     if let None = files.iter().find(|x| **x == path.to_string()){
       files.push(path.to_string());
       fs::write(FILE_LIST_PATH, files.join("\n").as_bytes()).unwrap();
     }
+  }else{
+    let _ = fs::write(FILE_LIST_PATH,path );
   }
   Ok(ret)
 }
@@ -273,6 +274,8 @@ fn save_to_file(path:&str,active_bank:State<ActiveBank>)->Result<(),String>{
       files.push(path.to_string());
       fs::write(FILE_LIST_PATH, files.join("\n").as_bytes()).unwrap();
     }
+  }else{
+    let _ = fs::write(FILE_LIST_PATH,path);
   }
   Ok(())
 }

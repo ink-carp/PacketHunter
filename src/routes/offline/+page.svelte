@@ -20,6 +20,7 @@
   let undecode_link:UndecodeProtocal | null;
   let undecode_net:UndecodeProtocal | null;
   let undecode_trans:UndecodeProtocal | null;
+  let selectedLayer:string|null = null;
 
 
 
@@ -86,6 +87,7 @@
     undecode_link = null;
     undecode_net = null;
     undecode_trans = null;
+    selectedLayer = null;
     invoke('clear_offline_bank');
     console.log('offline page destroyed');
   });
@@ -139,49 +141,67 @@
 
 {#if row_selcted}
 <footer>
-  <div>
-  {#if link}
-    <p>链路层:</p>
-    {#each link_parser(link) as line}
-      <p>{line}</p>
-    {/each}
-  {:else}
-    {"链路层解析失败，协议:"+undecode_link?.protocal_name}
-  {/if}
-  {#if net}
-    <p>网络层:</p>
-    {#each net_parser(net) as line}
-      <p>{line}</p>
-    {/each}
-  {:else}
-    {"网络层解析失败，协议:"+undecode_net?.protocal_name}
-  {/if}
-  {#if trans}
-    <p>传输层:</p>
-    {#each trans_parser(trans) as line}
-      <p>{line}</p>
-    {/each}
-  {:else}
-    {"传输层解析失败，协议:"+undecode_trans?.protocal_name}
-  {/if}
-  </div>
-  <div>
-    {#if link}
-      {link_payload(link)}
-    {:else}
-      {undecode_link?.payload}
-    {/if}
-    {#if net}
-      {net_payload(net)}
-    {:else}
-      {undecode_net?.payload}
-    {/if}
-    {#if trans}
-      {trans_payload(trans)}
-    {:else}
-      {undecode_trans?.payload}
-    {/if}
-  </div>
+	<div>
+		<details>
+			<summary on:click={() => selectedLayer = 'link'}>链路层:</summary>
+			{#if link}
+				{#each link_parser(link) as line}
+					<p>{line}</p>
+				{/each}
+			{:else}
+				{"链路层解析失败，协议:"+undecode_link?.protocal_name}
+			{/if}
+		</details>
+		<details>
+			<summary on:click={() => selectedLayer = 'net'}>网络层:</summary>
+			{#if net}
+				{#each net_parser(net) as line}
+					<p>{line}</p>
+				{/each}
+			{:else}	
+				{"网络层解析失败，协议:"+undecode_net?.protocal_name}
+			{/if}
+		</details>
+        <details>
+			<summary on:click={() => selectedLayer = 'trans'}>传输层:</summary>
+			{#if trans}
+				{#each trans_parser(trans) as line}
+					<p>{line}</p>
+				{/each}
+			{:else}
+				{"传输层解析失败，协议:"+undecode_trans?.protocal_name}
+			{/if}
+		</details>
+    </div>
+    <div style="border: 1px solid #000;border-radius: 4px;padding:1em;">
+        {#if selectedLayer === 'link'}
+            {#if link}
+                {link_payload(link)}
+			{:else if undecode_link}
+				{undecode_link.payload}
+			{:else}
+				"没有内容"
+			{/if}
+        {/if}
+        {#if selectedLayer === 'net'}
+			{#if net}
+				{net_payload(net)}
+			{:else if undecode_net}
+				{undecode_net.payload}
+			{:else}
+				"没有内容"
+			{/if}
+        {/if}
+        {#if selectedLayer === 'trans'}
+			{#if trans}
+				{trans_payload(trans)}
+			{:else if undecode_trans}
+				{undecode_trans.payload}
+			{:else}
+				"没有内容"
+			{/if}
+        {/if}
+    </div>
 </footer>
 {/if}
 
@@ -216,10 +236,13 @@
 		border-radius: 5px;
 		background-color: #f0f0f0;
 	}
-  header p{
-    width: 70%;
-    text-align: center;
-  }
+	header p{
+		border: 1px solid #000;
+		border-radius: 5px;
+		width: 50%;
+		text-align: center;
+		font-size: 16px;
+	}
   main{
     width: 95%;
     max-width: max-content;
@@ -237,7 +260,7 @@
 		padding: auto;
 		width: 45%;
 		height: 100%;
-		display: flex;
+		display: block;
 		flex: 0 0 50%;
 		flex-direction: column;
 		line-height: 1.2;
@@ -248,7 +271,30 @@
 	}
 	footer p{
 		margin: 0;
+		background-color: rgb(179, 224, 229);
 	}
+	details {
+		border: 1px solid #000;
+        border-radius: 4px;
+        margin-bottom: 1em;
+		padding: .5em;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    summary {
+		user-select: none;
+        font-size: 1.2em;
+        color: #333;
+        cursor: pointer;
+    }
+
+    summary:hover {
+        background: linear-gradient(to left, #61e5d3, #e549d3);
+    }
+
+    summary::-webkit-details-marker {
+        display: none;
+    }
   /* 表格样式 */
   table {
     width: max-content;
@@ -256,19 +302,44 @@
     font-size: 15px;
   }
 
-  table th {
-    background-color: #549fea;
-    border: 1px solid #000000;
-    padding: 8px;
-    text-align: center;
-    position: sticky;
-    top: 0;
-  }
-  table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-  }
+ /* 表格样式 */
+ table {
+		/* display: block;
+		overflow-x: auto; */
+		width: 100%;
+		max-width: max-content;
+		height: 100%;
+		border-collapse: collapse;
+		font-size: 15px;
+		white-space: nowrap;
+	}
+
+	table th {
+		background-color: #549fea;
+		border: 1px solid #000000;
+		padding: 8px;
+		text-align: center;
+		position: sticky;
+		top: 0;
+	}
+	table td {
+		border: 1px solid #ddd;
+		padding: 8px;
+		text-align: center;
+	}
+	table tr{
+		transition: all 0.3s ease;
+	}
+	table tr:hover {
+		transform: scaleY(1.1);
+		background: linear-gradient(to left, #61e5d3, #e549d3 , #cfe53e);
+	}
+
+	table tr:active {
+		transform: scaleY(0.9);
+		transform: scaleX(0.95);
+		background-color: rgb(238, 43, 235);
+	}
   button {
     transition: all 0.3s ease;
   }
