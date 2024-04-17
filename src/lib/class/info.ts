@@ -7,7 +7,3 @@ export interface PacketInfo{
     finalprotocal:string,
     info:string,
 }
-export interface UndecodeProtocal{
-    protocal_name:String,
-    payload:Uint8Array,
-}

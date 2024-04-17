@@ -1,10 +1,10 @@
 [package]
 name = "PacketHunter"
-version = "1.0.0"
+version = "1.0.1"
 description = "A Network Packet Capture Tool Based on Rust and Tauri" 
 authors = ["ink-carp"]
 license = ""
-repository = "github.com/ink-carp/my-app"
+repository = "github.com/ink-carp/PacketHunter"
 default-run = "PacketHunter"
 edition = "2021"
 rust-version = "1.60"
@@ -35,5 +35,5 @@ custom-protocol = [ "tauri/custom-protocol" ]
 panic = "abort" # Strip expensive panic clean-up logic
 codegen-units = 1 # Compile crates one after another so the compiler can optimize better
 lto = true # Enables link to optimizations
-opt-level = "s" # Optimize for binary size
 strip = true # Remove debug symbols
+opt-level = "s" # Optimize for binary size

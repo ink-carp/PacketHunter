@@ -9,10 +9,10 @@
   function bpf_analyzer(input: string) {
     invoke('bpf_analyzer', { code: input }).then(res => {
         bpf_isvalid.set(true);
-        console.log('bpf_analyzer executed with input:', input,"  Result: Ok");
+        console.debug('bpf_analyzer executed with input:', input,"  Result: Ok");
     }).catch(err => {
         bpf_isvalid.set(false);
-        console.log('bpf_analyzer executed with input:', input,"  Result:",err);
+        console.debug('bpf_analyzer executed with input:', input,"  Result:",err);
     });
   }
   const unsubscribe = bpf_statement.subscribe((value) => {
@@ -33,7 +33,7 @@
   onDestroy(() => {
       if (debounceTimer) clearTimeout(debounceTimer);
       unsubscribe();
-      console.log("Bpf Destroyed!");
+      console.debug("Bpf Destroyed!");
   });
 </script>
 

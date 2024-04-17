@@ -11,6 +11,3 @@ export interface Stream{
     receive:number,
     drop:number
 }
-export interface Flow{
-    nets:Stream[]
-}

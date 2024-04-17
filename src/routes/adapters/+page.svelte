@@ -4,7 +4,7 @@
     import {onMount,onDestroy} from 'svelte'
     import Bpf from '../Bpf.svelte';
     import Adaptermessage from './Adaptermessage.svelte';
-    import type {Adapter,Flow} from '$lib/class/adapter';
+    import type {Adapter,Stream} from '$lib/class/adapter';
 	import { message } from '@tauri-apps/api/dialog';
     import {goto} from '$app/navigation';
     import { bpf_statement ,bpf_isvalid, active_dev_name } from '$lib/global';
@@ -78,24 +78,18 @@
 
     // 当 getAdapter 函数获取到新的 devices 后，更新 adapters 的值
     function getAdapter() {
-        console.log("get_adapter!");
+        console.debug("get_adapter!");
+        if(unlisten){
+            unlisten.then((fn) => {
+                fn();
+            }).catch((err) => {
+                console.error(err);
+            });
+        }
         invoke('get_device').then((message) => {
             adapters.update(() => message as Adapter[]);
-        }).catch((err) => {
-            console.error(err);
-        });
-        get_stream();
-    }
-    function get_stream(){
-        console.log("get_stream!");
-        invoke('flow_start_send');
-        if(unlisten != null){
-            console.log("Already Listen!");
-            return;
-        }
-        // 监听事件
-        unlisten =  listen<Flow>('Flow', (event) => {
-                    for(const stream of event.payload.nets){
+            unlisten =  listen<[Stream]>('Flow', (event) => {
+                    for(const stream of event.payload){
                         const row = document.getElementById(stream.name);
                         const receive = row?.querySelector("#receive") as HTMLElement;
                         if(receive){
@@ -107,19 +101,22 @@
                             drop.innerText = stream.drop.toString();
                         }
                     }
-                });
+            });
+        }).catch((err) => {
+            console.error(err);
+        });
     }
     onMount(() => {
         bpf_statement.set("");
 		bpf_isvalid.set(true);
         getAdapter();
-        console.log("Adapter initialized!");
+        console.debug("Adapter initialized!");
     });
     onDestroy(() =>{
-        invoke('flow_stop_send').catch(() => {
+        invoke('stop_thread').catch(() => {
             console.error('Error stopping send');
         });
-        if (unlisten != null){
+        if (unlisten){
             unlisten.then((ok) =>{
                 ok();
                 unlisten = null;
@@ -127,7 +124,16 @@
                 console.error(err);
             });
          };
-        console.log("Adapter Destroyed!");
+        unlisten = null;
+        adapters.set([]);
+        showAdapterMessage = false;
+        ipv4 = null;
+        ipv6 = null;
+        mouseX = 0;
+        mouseY = 0;
+        adapterMessagePosition = 'right';
+        timer = null;
+        console.debug("Adapter Destroyed!");
     });
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  // 导入
+  // 导入模块
   import { invoke } from '@tauri-apps/api/tauri';
   import { open ,message } from '@tauri-apps/api/dialog';
   import { onMount,onDestroy } from 'svelte';

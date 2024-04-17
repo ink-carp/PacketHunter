@@ -76,7 +76,6 @@
         -webkit-background-clip: text;
         -webkit-background-size: 200% 100%;
         -webkit-animation: masked-animation 2s infinite linear;
-       
     }
     @-webkit-keyframes masked-animation {
             0%{ background-position: 0 0;}

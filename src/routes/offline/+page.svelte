@@ -2,95 +2,69 @@
   import { invoke } from '@tauri-apps/api/tauri';
   import {message} from '@tauri-apps/api/dialog';
   import { onMount,onDestroy } from 'svelte';
-  import type { PacketInfo } from '$lib/class/packet';
-  import { type LinkLayer ,link_parser,link_payload} from '$lib/class/linklayer';
-  import { type NetworkLayer ,net_parser,net_payload} from '$lib/class/netlayer';
-  import { type TransformLayer ,trans_parser, trans_payload} from '$lib/class/translayer';
-  import { type UndecodeProtocal } from '$lib/class/packet';
+  import type { PacketInfo } from '$lib/class/info';
   //这里不引入bpf_isvalid，因为这里不需要检查bpf语句是否合法,在上一部分就检查过了
-  import {offline_path,bpf_statement} from '$lib/global';
+  import {offline_path,bpf_statement,protocal2color} from '$lib/global';
   import {goto} from '$app/navigation';
+	import { writable, type Writable } from 'svelte/store';
+	import { listen, once, type UnlistenFn } from '@tauri-apps/api/event';
+  import type { Protocal } from '$lib/class/protocal';
 
   // 定义变量
-  let infos:PacketInfo[] | null;
+  let unlisten:Promise<UnlistenFn> | null;
+  let infos:Writable<Array<PacketInfo>> | null;
   let row_selcted:boolean = false;
-  let link:LinkLayer | null;
-  let net:NetworkLayer | null;
-  let trans:TransformLayer | null;
-  let undecode_link:UndecodeProtocal | null;
-  let undecode_net:UndecodeProtocal | null;
-  let undecode_trans:UndecodeProtocal | null;
-  let selectedLayer:string|null = null;
+  let protocals:Writable<Array<Protocal>> | null;
+  let protocal_index:number | null;
 
-
-
-  function get_offline_detail(row_index:number){
-    invoke<LinkLayer>('get_offline_linklayer',{index:row_index})
-    .then((res)=>{
-      link = res;
-      undecode_link = null;
-    })
-    .catch((err)=>{
-      link = null;
-      undecode_link = err as UndecodeProtocal;
-    });
-    invoke('get_offline_netlayer',{index:row_index})
-    .then((res:any)=>{
-      if(res){
-        const result = res as {Ok?: NetworkLayer, Err?: UndecodeProtocal};
-        if(result.Ok){
-          net = result.Ok;
-          undecode_net = null;
-        } else if(result.Err) {
-          undecode_net = result.Err;
-          net = null;
-        }
-      }
-    })
-    .catch(()=>{
-      undecode_net = null;
-      net = null;
-    });
-    invoke('get_offline_translayer',{index:row_index})
-    .then((res:any)=>{
-      if(res){
-        const result = res as {Ok?: TransformLayer, Err?: UndecodeProtocal};
-        if(result.Ok){
-          trans = result.Ok;
-          undecode_trans = null;
-        } else if(result.Err) {
-          trans = null;
-          undecode_trans = result.Err;
-        }
-      }
-    })
-    .catch(()=>{
-      undecode_trans = null;
-      trans = null;
-    });
-    row_selcted = true;
-  }
   onMount(()=>{
-    invoke<PacketInfo[]>('open_pcap_file',{path:$offline_path,bpf:$bpf_statement}).then((res)=>{
-      infos = res;
+    unlisten = null;
+    protocals = writable([]);
+    infos = writable([]);
+    row_selcted = false;
+    protocal_index = null;
+
+    invoke('open_pcap_file',{path:$offline_path,bpf:$bpf_statement}).then((res)=>{
+      unlisten = listen<PacketInfo>('Info',(event)=>{
+        infos?.update((value)=>{
+          value.push(event.payload);
+          return value;
+        });
+      });
+      once('Stop',()=>{
+        unlisten?.then((fn)=>fn());
+        unlisten = null;
+      });
+      console.debug('offline page mounted successfully!');
     }).catch((err)=>{
+      console.debug('offline page mounted failed!');
       message(err.toString(),"error");
     });
-    console.log('offline page mounted');
   });
   onDestroy(()=>{
+    invoke('clear_bank').catch((err)=>{
+      console.error(err);
+    });
+    unlisten?.then((fn)=>fn());
+    unlisten = null;
     infos = null;
     row_selcted = false;
-    link = null;
-    net = null;
-    trans = null;
-    undecode_link = null;
-    undecode_net = null;
-    undecode_trans = null;
-    selectedLayer = null;
-    invoke('clear_offline_bank');
-    console.log('offline page destroyed');
+    protocal_index = null;
+    protocals = null;
+    invoke('clear_bank');
+    console.debug('offline page destroyed');
   });
+
+  function select_row(index:number){
+    invoke<Protocal[]>('get_detail',{index:index})
+            .then((res)=>{
+              protocals?.set(res);
+              row_selcted = true;
+              protocal_index = null;
+            }).catch((err)=>{
+              console.error(err);
+    });
+  }
 </script>
 
 
@@ -104,7 +78,7 @@
 </header>
 
 <main>
-{#if infos}
+{#if $infos}
   <table class="table">
     <thead>
       <tr>
@@ -118,10 +92,10 @@
       </tr>
     </thead>
     <!-- 当且仅当infos有内容时才渲染 -->
-    {#if infos.length > 0}
+    {#if $infos.length}
       <tbody>
-        {#each infos as row}
-          <tr on:click={() => get_offline_detail(row.index)}>
+        {#each $infos as row}
+          <tr style="{protocal2color(row.finalprotocal)}" on:click={() => select_row(row.index)}>
             <td>{row.index}</td>
             <td>{row.source}</td>
             <td>{row.destination}</td>
@@ -142,66 +116,22 @@
 {#if row_selcted}
 <footer>
 	<div>
-		<details>
-			<summary on:click={() => selectedLayer = 'link'}>链路层:</summary>
-			{#if link}
-				{#each link_parser(link) as line}
-					<p>{line}</p>
-				{/each}
-			{:else}
-				{"链路层解析失败，协议:"+undecode_link?.protocal_name}
-			{/if}
-		</details>
-		<details>
-			<summary on:click={() => selectedLayer = 'net'}>网络层:</summary>
-			{#if net}
-				{#each net_parser(net) as line}
-					<p>{line}</p>
-				{/each}
-			{:else}	
-				{"网络层解析失败，协议:"+undecode_net?.protocal_name}
-			{/if}
-		</details>
+    {#if $protocals}
+      {#each $protocals as protocal , index}
         <details>
-			<summary on:click={() => selectedLayer = 'trans'}>传输层:</summary>
-			{#if trans}
-				{#each trans_parser(trans) as line}
-					<p>{line}</p>
-				{/each}
-			{:else}
-				{"传输层解析失败，协议:"+undecode_trans?.protocal_name}
-			{/if}
-		</details>
-    </div>
-    <div style="border: 1px solid #000;border-radius: 4px;padding:1em;">
-        {#if selectedLayer === 'link'}
-            {#if link}
-                {link_payload(link)}
-			{:else if undecode_link}
-				{undecode_link.payload}
-			{:else}
-				"没有内容"
-			{/if}
-        {/if}
-        {#if selectedLayer === 'net'}
-			{#if net}
-				{net_payload(net)}
-			{:else if undecode_net}
-				{undecode_net.payload}
-			{:else}
-				"没有内容"
-			{/if}
-        {/if}
-        {#if selectedLayer === 'trans'}
-			{#if trans}
-				{trans_payload(trans)}
-			{:else if undecode_trans}
-				{undecode_trans.payload}
-			{:else}
-				"没有内容"
-			{/if}
-        {/if}
-    </div>
+          <summary on:click={()=>{protocal_index = index;}}>{protocal.name}</summary>
+            {#each protocal.header as line}
+              <p>{line}</p>
+            {/each}
+        </details>
+      {/each}
+    {/if}
+	</div>
+  <div>
+    {#if protocal_index && $protocals}
+      {$protocals[protocal_index].payload}
+    {/if}
+  </div>
 </footer>
 {/if}
 

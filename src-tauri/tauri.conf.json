@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "PacketHunter",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -35,7 +35,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.github.ink-carp.my-app",
+      "identifier": "com.github.ink-carp.PacketHunter",
       "longDescription": "",
       "macOS": {
         "entitlements": null,

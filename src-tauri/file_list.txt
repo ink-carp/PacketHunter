@@ -1,6 +1,4 @@
 C:\Users\mojin\Desktop\graduate\222.pcap
 C:\Users\mojin\Desktop\graduate\111.pcap
 C:\Users\mojin\Desktop\graduate\loop.pcap
-C:\Users\mojin\Desktop\graduate\temp.pcap
 C:\Users\mojin\Desktop\graduate\packet_hunter.pcap
-C:\Users\mojin\Desktop\packet_hunter.pcap
