@@ -201,8 +201,10 @@ fn start_capture(bpf:String,devname:String,limit:u32,window:Window,active_bank:S
     .map_err(|e| e.to_string() )?
     .immediate_mode(true)
     //缓冲区没必要太大，因为数据会存储在bank中
-    .buffer_size(1024*1024)
+    //应该支持10MB的网速
+    .buffer_size(1024*1024*10)
     //捕获的最大数据包不超过100KB
+    //实际上也不会有这么大的数据包
     .snaplen(1024*100)
     .open()
     {

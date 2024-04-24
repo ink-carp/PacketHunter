@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
-    import { Chart, LineController, CategoryScale, LinearScale, PointElement ,LineElement} from 'chart.js';
+    import { Chart, LineController, CategoryScale, LinearScale, PointElement ,LineElement,BarController,BarElement} from 'chart.js';
 	import { invoke } from '@tauri-apps/api';
 	import { message } from '@tauri-apps/api/dialog';
     interface PacketCount {
@@ -15,7 +15,7 @@
         flow_count_by_second: Uint32Array, // 索引值就是时间顺序,统计每秒的流量
         size_count: Uint32Array, // 索引值就是大小 *10 ,超过1000kB的都算在1000kB
     }
-    Chart.register(LineController, CategoryScale, LinearScale, PointElement,LineElement);
+    Chart.register(LineController, CategoryScale, LinearScale, PointElement,LineElement,BarController,BarElement);
     Chart.defaults.font.family = 'Arial';
     Chart.defaults.font.size = 16;
     Chart.defaults.color = '#333';
@@ -74,15 +74,16 @@
                 const ctx = sizecanvas.getContext('2d');
                 if (ctx) {
                     chart = new Chart(ctx, {
-                        type: 'line',
+                        type: 'bar',
                         data: {
                             labels: Array.from({length: count.size_count.length}, (_, i) => i + 1),
                             datasets: [{
-                                label: 'Flow Count by Second',
+                                label: 'Flow Count by Size',
                                 data: Array.from(count.size_count),
-                                fill: false,
+                                // fill: false,
                                 borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1
+                                backgroundColor: 'rgb(171, 208, 107)',
+                                // tension: 0.1
                             }]
                         },
                         options: {

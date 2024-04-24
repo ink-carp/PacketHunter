@@ -11,7 +11,6 @@
     import Bpf from '../../lib/component/Bpf.svelte';
     import type {Adapter,Stream} from '$lib/class/adapter';
     import { bpf_statement ,bpf_isvalid, active_device,packets_limit } from '$lib/global';
-	import { Mode } from '$lib/class/info';
 
 
 
