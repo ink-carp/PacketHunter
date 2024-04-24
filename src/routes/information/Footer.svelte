@@ -34,7 +34,7 @@
             {/each}
             </div>
         {/if}
-        {#if items.length > 0 && items[items.length-1].payload.length>0}
+        {#if items.length > 0 && items[items.length-1].payload}
             <div>
                 <p>数据包内容:</p>
                 <p>{items[items.length-1].payload?.reduce((acc,cur)=>acc+cur.toString(16).padStart(2,'0')+" ",'')}</p>
