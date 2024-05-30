@@ -22,41 +22,40 @@
 		capture_status.set(false);
 		select_row.set(-1);
 		infolayer.set(InfoLayer.link);
+		unlisten = listen<PacketInfo>('Info',(info)=>{
+					items = [...items,info.payload];
+				});
+		once('Stop',()=>{
+			if(unlisten){
+				unlisten.then((fn)=>{
+					fn();
+				});
+			}
+			capture_status.set(false);
+		});
 		//监听数据包
 		if($active_device.length){
 			invoke('start_capture',{devname:$active_device,bpf:$bpf_statement,limit:$packets_limit})
 			.then(()=>{
 				capture_status.set(true);
-				unlisten = listen<PacketInfo>('Info',(info)=>{
-					items = [...items,info.payload];
-				});
-				once('Stop',()=>{
-					if(unlisten){
-						unlisten.then((fn)=>{
-							fn();
-						});
-					}
-					capture_status.set(false);
-				});
 			}).catch((err)=>{
+				if(unlisten){
+					unlisten.then((fn)=>{
+						fn();
+					});
+				}
 				message(err.toString(),"error");
 			});
 		}else if($offline_path.length){
 			invoke('open_pcap_file',{path:$offline_path,bpf:$bpf_statement})
 			.then(()=>{
 				capture_status.set(true);
-				unlisten = listen<PacketInfo>('Info',(info)=>{
-					items = [...items,info.payload];
-				});
-				once('Stop',()=>{
-					if(unlisten){
-						unlisten.then((fn)=>{
-							fn();
-						});
-					}
-					capture_status.set(false);
-				});
 			}).catch((err)=>{
+				if(unlisten){
+					unlisten.then((fn)=>{
+						fn();
+					});
+				}
 				message(err.toString(),"error");
 			});
 		}

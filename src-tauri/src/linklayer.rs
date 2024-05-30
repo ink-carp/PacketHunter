@@ -99,7 +99,7 @@ fn handle_ethertype(ethertype:EtherType,packet: EthernetPacket,protocals:&mut Ve
 
 
 pub(crate) fn info_linklayer(row:&[u8],linktype:&Linktype,link_info:&mut HeaderInfo)->Option<(EtherType,Vec<u8>)>{
-    link_info.set_protocal(linktype.get_name().unwrap_or(linktype.0.to_string()));
+    link_info.set_protocal(linktype.get_name().unwrap_or(format!("链路类型 [{}]",linktype.0)));
     match *linktype{
         Linktype::ETHERNET =>{
             if let Some(packet) = EthernetPacket::new(row){
@@ -121,7 +121,7 @@ pub(crate) fn info_linklayer(row:&[u8],linktype:&Linktype,link_info:&mut HeaderI
     }
 }
 fn info_ethertype(ethertype:EtherType,packet: EthernetPacket,link_info:&mut HeaderInfo)->Option<(EtherType,Vec<u8>)>{
-    // link_info.set_protocal(ethertype.to_string());
+    //link_info.set_protocal(ethertype.to_string());
     let header = EthernetHeader::from(&packet);
     link_info.by(header);
     match ethertype {

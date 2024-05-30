@@ -25,7 +25,7 @@ struct Bank{
   linktype:Mutex<Option<Linktype>>,
   packets:Arc<Mutex<Vec<PacketOwned>>>,
 }
-fn main() {
+fn main(){
   tauri::Builder::default()
   //全局状态初始化并托管
   .manage(RunState{is_running:Arc::new(Mutex::new(false))})
@@ -128,7 +128,8 @@ fn get_device(window:Window,flow_run:State<RunState>,flow_handle:State<ThreadSta
 //对Bpf程序的语法分析函数
 #[tauri::command]
 fn bpf_analyzer(code:&str)->Result<(),&str>{
-  let dead_cap = Capture::dead(Linktype::from_name("loop").unwrap()).unwrap();
+  // let dead_cap = Capture::dead(Linktype::from_name("loop").unwrap()).unwrap();
+  let dead_cap = Capture::dead(Linktype(1)).unwrap();
   if dead_cap.compile(code, false).is_ok(){
       Ok(())
   }else {
@@ -141,7 +142,7 @@ fn bpf_analyzer(code:&str)->Result<(),&str>{
 #[tauri::command]
 fn open_pcap_file(path:&str,bpf:&str,window:Window,offline_bank:State<Bank>)->Result<(),String>{
   let path = path.trim();
-  dbg!("Start open file:{path}!");
+  dbg!("Start open file:{}!",path);
   match Capture::from_file(path){
     Ok(mut cap) =>{
       match cap.filter(bpf, true){
@@ -329,4 +330,43 @@ fn get_count()->PacketCount{
 #[tauri::command]
 fn clear_count(){
   GLOBAL_COUNT_MESSAGE.lock().unwrap().clear();
+}
+
+
+#[test]
+fn test_get_device(){
+  let devices = Device::list();
+  assert!(devices.is_ok());
+}
+#[test]
+fn test_bpf_analyzer(){
+  let code = "tcp port 80";
+  let result = bpf_analyzer(code);
+  assert!(result.is_ok());
+}
+#[test]
+fn test_open_pcap_file(){
+  let path = "load.pcap";
+  let result = Capture::from_file(path);
+  assert!(result.is_ok());
+}
+#[test]
+fn test_start_capture(){
+  let result = Device::lookup().unwrap().unwrap().open();
+  assert!(result.is_ok());
+}
+#[test]
+fn test_save_to_file(){
+  let path = "save.pcap";
+  let result = Capture::dead(Linktype(1)).map(|cap| cap.savefile(path));
+  assert!(result.is_ok());
+}
+#[test]
+fn test_get_file_list(){
+  let result = get_file_list();
+  assert!(!result.is_empty());
+}
+#[test]
+fn test_clear_count(){
+  clear_count();
 }

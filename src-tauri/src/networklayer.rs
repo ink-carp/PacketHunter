@@ -134,7 +134,7 @@ pub(crate) fn info_netlayer(code:u8,row:Vec<u8>,net_info:&mut HeaderInfo)->Optio
             None
         } 
     }else {
-        //不关心其他协议
+        net_info.set_protocal(format!("Null code:{}",code));
         None
     }
 }
